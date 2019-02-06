@@ -3,12 +3,13 @@ SNMoE_Matlab
 
 A Matlab/Octave toolbox for modeling, sampling, inference, and clustering heteregenous data with the Skew-Normal Mixture-of-Experts (SNMoE) model.
 
-The code can be run on simulated data and some provided benchmarks (please look to the functions main... for more details):
+The code can be run on simulated data and some provided benchmarks:
 
 run 'main_univ_NMoE_SNMoE_TMoE_STMoE.m' for some simulated data
 run 'main_univ_NMoE_TMoE_STMoE_RealData.m' for some benchmarks
+Please look to the functions main... for more details
 
-Please cite the following papers for this code:
+*Please cite the following papers for this code*:
 
 ``` 
 @InProceedings{Chamroukhi-SNMoE-IJCNN-2016,
