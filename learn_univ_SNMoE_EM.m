@@ -100,15 +100,9 @@ while EM_try <= total_EM_tries
     %     Sigma2k = Sigmak.^2;
     
     %% Initialize the skewness parameter Lambdak (by equivalence Deltak)
-    Deltak = -1 + 2*rand(1,K);
-    Lambdak = Deltak./sqrt(1-Deltak.^2);
-    
-    %     Deltak = 0.5 + (.5)*rand(1,K);
-    %     %end
-    %     Lambdak = Deltak./sqrt(1-Deltak.^2);
-    
-    %d = l/sqrt(1+l^2) =>  d^2 = l^2/(1+l^2) =>l^2 = d^2 + d^2*l^2 =>
-    %l^2 (1-d^2) = d^2 => l = d/sqrt(1-d^2);
+    Lambdak = -1 + 2*rand(1,K);
+    Deltak = Lambdak.^2./sqrt(1+Lambdak.^2);
+
     %%%
     iter = 0;
     converge = 0;
@@ -134,7 +128,7 @@ while EM_try <= total_EM_tries
             %Dik(:,k) = dik;
             
             % E[U|y,zik=1] and E[U^2|y,zik=1]
-            mu_uk = (Deltak(k)*abs(y - muk)); % ?????????
+            mu_uk = (Deltak(k)*abs(y - muk)); % %
             sigma2_uk = (1-Deltak(k)^2)*Sigma2k(k);
             
             sigma_uk = sqrt(sigma2_uk);
@@ -178,19 +172,19 @@ while EM_try <= total_EM_tries
             Sigma2k(k)= sum(Tauik(:,k).*((y-XBeta*betak).^2 - 2*Deltak(k)*E1ik(:,k).*(y-XBeta*betak) + E2ik(:,k)))/...
                 (2*(1-Deltak(k)^2)*sum(Tauik(:,k)));
             
-            % update the deltak (the skewness parameter)
-            delta0 = Deltak(k);
-            
-            Deltak(k) = fzero(@(delta) Sigma2k(k)*delta*(1-delta^2)*sum(Tauik(:,k)) ...
-                + (1+ delta.^2)*sum(Tauik(:,k).*(y-XBeta*betak).*E1ik(:,k)) ...
-                - delta * sum(Tauik(:,k).*(E2ik(:,k) + (y-XBeta*betak).^2)), [-1, 1]);%delta0
-            
-            % Deltak(k)=0;
             % update the lambdak (the skewness parameter)
-            Lambdak(k) = Deltak(k)/sqrt(1 - Deltak(k)^2);
+            lambda0 = Lambdak(k);
+
+%             Deltak(k) = fzero(@(delta) Sigma2k(k)*delta*(1-delta^2)*sum(Tauik(:,k)) ...
+%                 + (1+ delta.^2)*sum(Tauik(:,k).*(y-XBeta*betak).*E1ik(:,k)) ...
+%                 - delta * sum(Tauik(:,k).*(E2ik(:,k) + (y-XBeta*betak).^2)), delta0);%[-1, 1]
             
-            %             Lambdak(k) = 2;%
-            %             Deltak = Lambdak./sqrt(1 + Lambdak.^2);
+            Deltak(k) = fzero(@(lmbda) Sigma2k(k)*(lmbda/sqrt(1+lmbda^2))*(1-(lmbda^2/(1+lmbda^2)))*sum(Tauik(:,k)) ...
+                + (1+ (lmbda^2/(1+lmbda^2)).^2)*sum(Tauik(:,k).*(y-XBeta*betak).*E1ik(:,k)) ...
+                - (lmbda/sqrt(1+lmbda^2))* sum(Tauik(:,k).*(E2ik(:,k) + (y-XBeta*betak).^2)), lambda0);%[-1, 1]
+
+            % update the deltakak (the skewness parameter)
+            Deltak = Lambdak./sqrt(1 + Lambdak.^2);
         end
         %%
         
