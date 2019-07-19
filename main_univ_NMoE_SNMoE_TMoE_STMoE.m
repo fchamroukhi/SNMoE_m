@@ -86,7 +86,7 @@ inference_model = 'SNMoE';
 
 
 %% EM features
-nbr_EM_tries = 1;
+nbr_EM_tries = 3;
 max_iter_EM = 1500;
 threshold = 1e-4;
 verbose_EM = 1;
