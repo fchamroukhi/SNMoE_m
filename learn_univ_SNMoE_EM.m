@@ -184,7 +184,7 @@ while EM_try <= total_EM_tries
                 - (lmbda/sqrt(1+lmbda^2))* sum(Tauik(:,k).*(E2ik(:,k) + (y-XBeta*betak).^2)), lambda0);%[-1, 1]
 
             % update the deltakak (the skewness parameter)
-            Deltak = Lambdak./sqrt(1 + Lambdak.^2);
+            Deltak(k) = Lambdak(k)/sqrt(1 + Lambdak(k)^2);
         end
         %%
         
