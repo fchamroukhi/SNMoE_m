@@ -48,11 +48,11 @@ function solution = learn_univ_SNMoE_EM(Y, x, K, p, dim_w, total_EM_tries, max_i
 warning off
 
 
-if nargin<10 verbose_IRLS = 0; end
-if nargin<9  verbose_IRLS =0; verbose_EM = 0; end;
-if nargin<8  verbose_IRLS =0; verbose_EM = 0;   threshold = 1e-6; end;
-if nargin<7  verbose_IRLS =0; verbose_EM = 0;   threshold = 1e-6; max_iter_EM = 1000; end;
-if nargin<6  verbose_IRLS =0; verbose_EM = 0;   threshold = 1e-6; max_iter_EM = 1000; total_EM_tries=1;end;
+if nargin<10, verbose_IRLS = 0; end
+if nargin<9,  verbose_IRLS =0; verbose_EM = 0; end
+if nargin<8,  verbose_IRLS =0; verbose_EM = 0;   threshold = 1e-6; end
+if nargin<7,  verbose_IRLS =0; verbose_EM = 0;   threshold = 1e-6; max_iter_EM = 1000; end
+if nargin<6,  verbose_IRLS =0; verbose_EM = 0;   threshold = 1e-6; max_iter_EM = 1000; total_EM_tries=1;end
 
 if size(Y,2)==1, Y=Y'; end %
 [n, m] = size(Y); % n curves, each curve is composed of m observations
@@ -72,7 +72,7 @@ best_loglik = -inf;
 stored_cputime = [];
 EM_try = 1;
 while EM_try <= total_EM_tries
-    if total_EM_tries>1, fprintf(1, 'CEM run n°  %d  \n ', EM_try); end
+    if total_EM_tries>1, fprintf(1, 'ECM run n°  %d  \n ', EM_try); end
     time = cputime;
     %% EM Initialisation
     
@@ -88,8 +88,6 @@ while EM_try <= total_EM_tries
     %     m3 = (1/(m-1))*sum(abs(y - ybar).^3);
     %     DeltakAll = (a1^2 + m2*(b1/m3)^(2/3))^(0.5);
     %     Deltak = DeltakAll*ones(1,K);
-    %     Lambdak = Deltak./sqrt(1-Deltak.^2)
-    
     
     % %% or initialize with NMoE
     %     solution = learn_univ_NMoE_EM(Y, x, K, p, q, 1, 500, 1e-6, 1, 0);
@@ -101,7 +99,7 @@ while EM_try <= total_EM_tries
     
     %% Initialize the skewness parameter Lambdak (by equivalence Deltak)
     Lambdak = -1 + 2*rand(1,K);
-    Deltak = Lambdak.^2./sqrt(1+Lambdak.^2);
+    Deltak = Lambdak./sqrt(1+Lambdak.^2);
 
     %%%
     iter = 0;
@@ -127,14 +125,14 @@ while EM_try <= total_EM_tries
             dik = (y - muk)/sigmak;
             %Dik(:,k) = dik;
             
-            % E[U|y,zik=1] and E[U^2|y,zik=1]
-            mu_uk = (Deltak(k)*abs(y - muk)); % %
+            % E[Ui|yi,xi,zik=1] and E[Ui^2|yi,xi,zik=1]
+            mu_uk = Deltak(k)*(y - muk);
             sigma2_uk = (1-Deltak(k)^2)*Sigma2k(k);
-            
             sigma_uk = sqrt(sigma2_uk);
             
-            % E1ik and E2ik
+            % E1ik = E[Ui|yi,xi,zik=1] and E2ik
             E1ik(:,k) = mu_uk + sigma_uk * normpdf(Lambdak(k)*dik)./normcdf(Lambdak(k)*dik);
+            % E2ik = E[Ui^2|y,zik=1]
             E2ik(:,k) = mu_uk.^2 + sigma_uk.^2 + sigma_uk*mu_uk.*normpdf(Lambdak(k)*dik)./normcdf(Lambdak(k)*dik);
             
             % piik*SN(.;muk;sigma2k;lambdak)
@@ -144,7 +142,12 @@ while EM_try <= total_EM_tries
         log_piik_fik = log(piik_fik);
         log_sum_piik_fik = log(sum(piik_fik,2));
         
+        % E[Zik|y,x] and E[U^2|y,zik=1]
         Tauik = piik_fik./(sum(piik_fik,2)*ones(1,K));
+        
+        %log_Tauik = log_piik_fik - logsumexp(log_piik_fik, 2)*ones(1,K);
+        %Tauik = exp(log_Tauik);
+        
         %% M-Step
         % updates of Alpha, betak's, sigma2k's and lambdak's
         % --------------------------------------------------%
@@ -165,9 +168,7 @@ while EM_try <= total_EM_tries
             betak = (tauik_Xbeta'*XBeta)\(tauik_Xbeta'*(y - Deltak(k)*E1ik(:,k)));
             
             Betak(:,k) = betak;
-            
-            % if find(isnan(Betak)), Betak = Betak_old; betak = Betak(:,k); end
-            
+                        
             % % update the variances sigma2k
             Sigma2k(k)= sum(Tauik(:,k).*((y-XBeta*betak).^2 - 2*Deltak(k)*E1ik(:,k).*(y-XBeta*betak) + E2ik(:,k)))/...
                 (2*(1-Deltak(k)^2)*sum(Tauik(:,k)));
@@ -175,13 +176,13 @@ while EM_try <= total_EM_tries
             % update the lambdak (the skewness parameter)
             lambda0 = Lambdak(k);
 
-%             Deltak(k) = fzero(@(delta) Sigma2k(k)*delta*(1-delta^2)*sum(Tauik(:,k)) ...
-%                 + (1+ delta.^2)*sum(Tauik(:,k).*(y-XBeta*betak).*E1ik(:,k)) ...
-%                 - delta * sum(Tauik(:,k).*(E2ik(:,k) + (y-XBeta*betak).^2)), delta0);%[-1, 1]
-            
-            Deltak(k) = fzero(@(lmbda) Sigma2k(k)*(lmbda/sqrt(1+lmbda^2))*(1-(lmbda^2/(1+lmbda^2)))*sum(Tauik(:,k)) ...
-                + (1+ (lmbda^2/(1+lmbda^2)))*sum(Tauik(:,k).*(y-XBeta*betak).*E1ik(:,k)) ...
-                - (lmbda/sqrt(1+lmbda^2))* sum(Tauik(:,k).*(E2ik(:,k) + (y-XBeta*betak).^2)), lambda0);%[-1, 1]
+            try
+                Lambdak(k) = fzero(@(lmbda) Sigma2k(k)*(lmbda./sqrt(1+lmbda.^2))*(1-(lmbda.^2/(1+lmbda.^2)))*sum(Tauik(:,k)) ...
+                    + (1+ (lmbda.^2/(1+lmbda.^2)))*sum(Tauik(:,k).*(y-XBeta*betak).*E1ik(:,k)) ...
+                    - (lmbda./sqrt(1+lmbda.^2))* sum(Tauik(:,k).*(E2ik(:,k) + (y-XBeta*betak).^2)), lambda0);
+            catch
+                Lambdak(k) = lambda0;
+            end
 
             % update the deltakak (the skewness parameter)
             Deltak(k) = Lambdak(k)/sqrt(1 + Lambdak(k)^2);
@@ -221,24 +222,24 @@ while EM_try <= total_EM_tries
     %
     solution.Psi = Psi;
     
-    %% classsification pour EM : MAP(piik) (cas particulier ici to ensure a convex segmentation of the curve(s).
+    %Bayes' allocation rule to calculate a partition of the data
     [klas, Zik] = MAP(solution.Tauik);%solution.param.Piik);
     solution.klas = klas;
     
     % Statistics (mean and variances)
     
-    % E[yi|zi=k]
+    % E[yi|xi,zi=k]
     Ey_k = XBeta(1:m,:)*Betak + ones(m,1)*( sqrt(2/pi)*Deltak.*Sigmak );
     solution.Ey_k = Ey_k;
-    % E[yi]
+    % E[yi|xi]
     Ey = sum(Piik.*Ey_k,2);
     solution.Ey = Ey;
     
-    % Var[yi|zi=k]
+    % Var[yi|xi,zi=k]
     Var_yk = (1 - (2/pi)*(Deltak.^2)).*(Sigmak.^2);
     solution.Vary_k = Var_yk;
     
-    % Var[yi]
+    % Var[yi|xi]
     Var_y = sum(Piik.*(Ey_k.^2 + ones(m,1)*Var_yk),2) - Ey.^2;
     solution.Vary = Var_y;
     
@@ -265,7 +266,7 @@ while EM_try <= total_EM_tries
         best_solution = solution;
         best_loglik = loglik;
     end
-end%fin de la premiï¿½re boucle while
+end
 solution = best_solution;
 %
 if total_EM_tries>1;   fprintf(1,'best loglik:  %f\n',solution.ml); end

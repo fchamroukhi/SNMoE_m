@@ -86,7 +86,7 @@ inference_model = 'SNMoE';
 
 
 %% EM features
-nbr_EM_tries = 3;
+nbr_EM_tries = 1;
 max_iter_EM = 1500;
 threshold = 1e-4;
 verbose_EM = 1;
@@ -109,8 +109,8 @@ q = 1;
 
 Alphak = [0, 8]';
 Betak = [0 0;
-    -1 1];
-Sigmak = [.1, .1];%the standard deviations
+    -2.5 2.5];
+Sigmak = [1, 1];%the standard deviations
 Lambdak = [3, 5];
 Nuk = [5, 7];
 
@@ -139,7 +139,6 @@ switch data_model
         error('Unknown chosen model');
 end
 
-
 %% outliers
 if WithOutliers
     rate = 0.05;%amount of outliers in the data
@@ -147,7 +146,7 @@ if WithOutliers
     outilers = -1.5 + 2*rand(No,1);
     tmp = randperm(length(y));
     Indout = tmp(1:No);
-    y(Indout) = -2;%outilers;
+    y(Indout) = -5;%outilers;
 end
 
 
@@ -209,7 +208,7 @@ switch inference_model
         h4 = plot(x,stats.Ey,'k','linewidth',2);
         h5 = plot(x,solution.Ey,'r','linewidth',2);
         xlabel('x'), ylabel('y');
-        ylim([-2, 1])
+        ylim([-5, 5])
         hold off
         legend([h1, h4, h3(1), h5, h2(1)], 'data',['True mean',' (',data_model,')'],'True Experts', ...
             ['Estimated mean',' (',inference_model,')'],'Estimated Experts',...
@@ -259,7 +258,7 @@ switch inference_model
             'Location','SouthWest');
         legend('boxoff');
         xlabel('x'), ylabel('y');
-        ylim([-2, 1])
+        ylim([-5, 5])
         hold off
         
         %% obtained partition
@@ -271,7 +270,7 @@ switch inference_model
         %h13 = gscatter(x,y,klas,'kr','oo');
         h13 =  plot(x(klas==1),y(klas==1),'o','color',[0.6 0.6 .6]);
         h14 =  plot(x(klas==2),y(klas==2),'o','color',[1 0 0]);
-        ylim([-2, 1])
+        ylim([-5, 5])
         legend([h11, h12, h13, h14],'Actual expert mean 1','Actual expert mean 2','Actual cluster 1','Actual cluster 2','Location','SouthWest');
         box on
         xlabel('x'), ylabel('y');
@@ -288,7 +287,7 @@ switch inference_model
         h23 =  plot(x(solution.klas==1),y(solution.klas==1),'o', 'color',[0.6 0.6 .6]);
         h24 =  plot(x(solution.klas==2),y(solution.klas==2),'o', 'color',[1 0 0]);
         legend([h21, h22, h23, h24],'Estimated expert mean 1','Estimated expert mean 2','Estimated cluster 1','Estimated cluster 2','Location','SouthWest');
-        ylim([-2, 1]);
+        ylim([-5, 5])
         box on
         xlabel('x'), ylabel('y');
         

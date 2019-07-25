@@ -67,6 +67,16 @@ end
 %     y = stats.Ey + .1*randn(n,1);
 % end
 
+% %% Sinc
+% % if strcmp(data_model,'Sinc')
+% n=500
+%     x=linspace(-1,1,n);
+%     stats.Ey = sinc(pi*x)';
+%     y = stats.Ey + .1*randn(n,1);
+% % end
+% K=3;p=3;
+
+
 figure,
 plot(x, y, 'ko')
 xlabel('x')
