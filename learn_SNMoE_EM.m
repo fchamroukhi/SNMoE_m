@@ -76,20 +76,20 @@ while EM_try <= total_EM_tries
     time = cputime;
     %% EM Initialisation
     
-    %%1. Initialisation of Alphak's, Betak's and Sigmak's
-    segmental = 0;
+    %% 1. Initialisation of Alphak's, Betak's and Sigmak's
+    segmental = 1;
     [Alphak, Betak, Sigma2k] = initialize_univ_NMoE(y, K, XAlpha, XBeta, segmental);
-    %% initialize using moments
+    %% possible initialization using moments
     %     ybar = mean(y);
     %     a1 = sqrt(2/pi);
     %     b1 = (4/pi - 1)*a1;
     %     m2 = (1/(m-1))*sum((y- ybar).^2);
     %     m3 = (1/(m-1))*sum(abs(y - ybar).^3);
     %     DeltakAll = (a1^2 + m2*(b1/m3)^(2/3))^(0.5);
-    %     Deltak = DeltakAll*ones(1,K);
+    %     Lambdak = DeltakAll*ones(1,K);
     
-    % %% or initialize with NMoE
-    %     solution = learn_univ_NMoE_EM(Y, x, K, p, q, 1, 500, 1e-6, 1, 0);
+    %% possible initialization with few iterations of NMoE
+    %     solution = learn_univ_NMoE_EM(Y, x, K, p, q, 1, 200, 1e-6, 1, 0);
     % %   total_EM_tries, max_iter_EM, threshold, verbose_EM, verbose_IRLS)
     %     Alphak=solution.param.Alphak;
     %     Betak =solution.param.Betak;
