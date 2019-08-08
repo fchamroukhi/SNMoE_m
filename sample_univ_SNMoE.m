@@ -1,4 +1,4 @@
-function [y, klas, stats, Z] = sample_univ_SNMoLE(Alphak, Betak, Sigmak, Lambdak, x)%, n)
+function [y, klas, stats, Z] = sample_univ_SNMoE(Alphak, Betak, Sigmak, Lambdak, x)%, n)
 % draw samples from a skew-normal mixture of linear experts model
 %
 %
@@ -51,14 +51,14 @@ Ey_k = XBeta*Betak + ones(n,1)*( sqrt(2/pi)*Deltak.*Sigmak );
 % E[yi]
 Ey = sum(Piik.*Ey_k,2);
 % Var[yi|zi=k]
-Vary_k = (1 - (2/pi)*(Deltak.^2)).*(Sigmak.^2);
+Vy_k = (1 - (2/pi)*(Deltak.^2)).*(Sigmak.^2);
 % Var[yi]
-Vary = sum(Piik.*(Ey_k.^2 + ones(n,1)*Vary_k),2) - Ey.^2;
+Vy = sum(Piik.*(Ey_k.^2 + ones(n,1)*Vy_k),2) - Ey.^2;
 
 
 stats.Ey_k = Ey_k;
 stats.Ey = Ey;
-stats.Vary_k = Vary_k;
-stats.Vary = Vary;
+stats.Vy_k = Vy_k;
+stats.Vy = Vy;
 
 

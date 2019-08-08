@@ -1,53 +1,32 @@
-SNMoE_Matlab
+>>>> skew-normal mixture-of-experts (SNMoE) <<<<<
 
+SNMoE : A Matlab/Octave toolbox for modeling, sampling, inference, regression and clustering of
+heterogeneous data with the Skew-Normal Mixture-of-Experts (SNMoE) model.
 
-A Matlab/Octave toolbox for modeling, sampling, inference, and clustering heteregenous data with the Skew-Normal Mixture-of-Experts (SNMoE) model.
+SNMoE provides a flexible modeling framework for heterogenous data with possibly
+skewed distributions to generalize the standard Normal mixture of expert model. SNMoE consists of a
+mixture of K skew-Normal expert regressors network (of degree p) gated by a softmax gating network
+(with regression degree q) and is represented by 
+- The gating net. parameters $\alpha$'s of the softmax net. 
+- The experts network parameters: The location parameters (regression coefficients)
+$\beta$'s, scale parameters $\sigma$'s, and the skewness parameters $\lambda$'s. SNMoE thus generalises  mixtures of (normal, skew-normal) distributions and mixtures of regressions with these distributions. For example, when
+$q=0$, we retrieve mixtures of (skew-normal, or normal) regressions, and when both
+$p=0$ and $q=0$, it is a mixture of (skew-normal, or normal) distributions. It also
+reduces to the standard (normal, skew-normal) distribution when we only use a
+single expert (K=1).
 
-The code can be run on simulated data and some provided benchmarks:
+Model estimation/learning is performed by a dedicated expectation conditional maximization (ECM)
+algorithm by maximizing the observed data log-likelihood. We provide simulated examples to
+illustrate the use of the model in model-based clustering of heteregenous regression data and in
+fitting non-linear regression functions. Real-world data examples of tone perception for musical
+data analysis, and the one of temperature anomalies for the analysis of climate change data, are
+also provided as application of the model.
 
-run 'main_univ_NMoE_SNMoE_TMoE_STMoE.m' for some simulated data
-run 'main_univ_NMoE_TMoE_STMoE_RealData.m' for some benchmarks
-Please look to the functions main... for more details
-
-*Please cite the following papers for this code*:
+To run it on the provided examples, please run "main_demo_SNMoE_SimulatedData.m" or "main_demo_SNMoE_RealData.m"
 
 ``` 
-@InProceedings{Chamroukhi-SNMoE-IJCNN-2016,
-    Author         = {F. Chamroukhi},
-    booktitle  = {The International Joint Conference on Neural Networks (IJCNN)},
-    Address = {Vancouver, Canada},
-    Title          = {Skew-Normal Mixture of Experts},
-    Year           = {2016},
-	Month = {July},
-	url = {https://chamroukhi.com/papers/Chamroukhi-SNMoE-IJCNN2016.pdf},
-	slides = {./conf-presentations/FChamroukhi-IJCNN-2016-Talk.pdf},
-	software =  {https://github.com/fchamroukhi/SNMoE_Matlab}
-	}
-  
-@article{Chamroukhi-NNMoE-2015,
-	Author = {F. Chamroukhi},
-	eprint = {arXiv:1506.06707},
-	Title = {Non-Normal Mixtures of Experts},
-	Volume = {},
-	url= {http://arxiv.org/pdf/1506.06707.pdf},
-	month = {July},
-	Year = {2015},
-	note = {Report (61 pages)}
-}
-
-@article{NguyenChamroukhi-MoE,
-	Author = {Hien D. Nguyen and Faicel Chamroukhi},
-	Journal = {Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery},
-	Title = {Practical and theoretical aspects of mixture-of-experts modeling: An overview},
-publisher = {Wiley Periodicals, Inc},
-issn = {1942-4795},
-doi = {10.1002/widm.1246},
-pages = {e1246--n/a},
-keywords = {classification, clustering, mixture models, mixture of experts, neural networks},
-	Month = {Feb},
-Year = {2018},
-url = {https://chamroukhi.com/papers/Nguyen-Chamroukhi-MoE-DMKD-2018}
-}
-```
-Developed and written by Faicel Chamroukhi
-(c) F. Chamroukhi (2015)
+Please cite the code and the following papers when using this code: 
+- F. Chamroukhi. Skew-Normal Mixture of Experts., July, 2016, The International Joint Conference on Neural Networks.
+- F. Chamroukhi. Non-Normal Mixtures of Experts. arXiv:1506.06707, July, 2015
+``` 
+(c) Introduced and written by Faicel Chamroukhi (may 2015)

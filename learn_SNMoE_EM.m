@@ -1,4 +1,4 @@
-function solution = learn_univ_SNMoE_EM(Y, x, K, p, dim_w, total_EM_tries, max_iter_EM, threshold, verbose_EM, verbose_IRLS)
+function solution = learn_SNMoE_EM(Y, x, K, p, dim_w, total_EM_tries, max_iter_EM, threshold, verbose_EM, verbose_IRLS)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % learn_univ_SNMoE_EM: fits an SNMoE model with the Conditional EM algorithm
 %
@@ -77,9 +77,8 @@ while EM_try <= total_EM_tries
     %% EM Initialisation
     
     %%1. Initialisation of Alphak's, Betak's and Sigmak's
-    segmental = 1;
+    segmental = 0;
     [Alphak, Betak, Sigma2k] = initialize_univ_NMoE(y, K, XAlpha, XBeta, segmental);
-    if EM_try ==1, Alphak = zeros(q+1,K-1);end % set the first initialization to the null vector
     %% initialize using moments
     %     ybar = mean(y);
     %     a1 = sqrt(2/pi);
@@ -159,11 +158,6 @@ while EM_try <= total_EM_tries
         %%
         for k=1:K
             %%update the regression coefficients
-            %             XBetak = XBeta.*(sqrt(Tauik(:,k))*ones(1,p+1));%[m*(p+1)]
-            %             yk = sqrt(Tauik(:,k)).*y;% dimension :(nx1).*(nx1) = (nx1)
-            %             %
-            %             betak = (XBetak'*XBetak)\(XBetak'*(yk - (Deltak(k)./sqrt(Tauik(:,k))).*E1ik(:,k)));
-            
             tauik_Xbeta = (Tauik(:,k)*ones(1,p+1)).*XBeta;
             betak = (tauik_Xbeta'*XBeta)\(tauik_Xbeta'*(y - Deltak(k)*E1ik(:,k)));
             
@@ -179,7 +173,7 @@ while EM_try <= total_EM_tries
             try
                 Lambdak(k) = fzero(@(lmbda) Sigma2k(k)*(lmbda./sqrt(1+lmbda.^2))*(1-(lmbda.^2/(1+lmbda.^2)))*sum(Tauik(:,k)) ...
                     + (1+ (lmbda.^2/(1+lmbda.^2)))*sum(Tauik(:,k).*(y-XBeta*betak).*E1ik(:,k)) ...
-                    - (lmbda./sqrt(1+lmbda.^2))* sum(Tauik(:,k).*(E2ik(:,k) + (y-XBeta*betak).^2)), lambda0);
+                    - (lmbda./sqrt(1+lmbda.^2))* sum(Tauik(:,k).*(E2ik(:,k) + (y-XBeta*betak).^2)), [-100, 100]);
             catch
                 Lambdak(k) = lambda0;
             end
@@ -208,59 +202,59 @@ while EM_try <= total_EM_tries
     param.Lambdak = Lambdak;
     
     solution.param = param;
-    solution.Deltak = Deltak;
+    solution.param.Deltak = Deltak;
     
     Piik = Piik(1:m,:);
     Tauik = Tauik(1:m,:);
-    solution.Piik = Piik;
-    solution.Tauik = Tauik;
-    solution.log_piik_fik = log_piik_fik;
-    solution.ml = loglik;
-    solution.stored_loglik = stored_loglik;
+    solution.stats.Piik = Piik;
+    solution.stats.Tauik = Tauik;
+    solution.stats.log_piik_fik = log_piik_fik;
+    solution.stats.ml = loglik;
+    solution.stats.stored_loglik = stored_loglik;
     %% parameter vector of the estimated SNMoE model
     Psi = [param.Alphak(:); param.Betak(:); param.Sigmak(:); param.Lambdak(:)];
     %
-    solution.Psi = Psi;
+    solution.stats.Psi = Psi;
     
     %Bayes' allocation rule to calculate a partition of the data
-    [klas, Zik] = MAP(solution.Tauik);%solution.param.Piik);
-    solution.klas = klas;
+    [klas, Zik] = MAP(Tauik);
+    solution.stats.klas = klas;
     
     % Statistics (mean and variances)
     
     % E[yi|xi,zi=k]
     Ey_k = XBeta(1:m,:)*Betak + ones(m,1)*( sqrt(2/pi)*Deltak.*Sigmak );
-    solution.Ey_k = Ey_k;
+    solution.stats.Ey_k = Ey_k;
     % E[yi|xi]
     Ey = sum(Piik.*Ey_k,2);
-    solution.Ey = Ey;
+    solution.stats.Ey = Ey;
     
     % Var[yi|xi,zi=k]
     Var_yk = (1 - (2/pi)*(Deltak.^2)).*(Sigmak.^2);
-    solution.Vary_k = Var_yk;
+    solution.stats.Vy_k = Var_yk;
     
     % Var[yi|xi]
     Var_y = sum(Piik.*(Ey_k.^2 + ones(m,1)*Var_yk),2) - Ey.^2;
-    solution.Vary = Var_y;
+    solution.stats.Vy = Var_y;
     
     %%% BIC AIC et ICL
-    lenPsi = length(Psi);
-    solution.lenPsi = lenPsi;
+    df = length(Psi);
+    solution.stats.df = df;
     
-    solution.BIC = solution.ml - (lenPsi*log(n*m)/2);
-    solution.AIC = solution.ml - lenPsi;
+    solution.stats.BIC = solution.stats.ml - (df*log(n*m)/2);
+    solution.stats.AIC = solution.stats.ml - df;
     %% CL(theta) : complete-data loglikelihood
-    zik_log_piik_fk = (repmat(Zik,n,1)).*solution.log_piik_fik;
+    zik_log_piik_fk = (repmat(Zik,n,1)).*solution.stats.log_piik_fik;
     sum_zik_log_fik = sum(zik_log_piik_fk,2);
     comp_loglik = sum(sum_zik_log_fik);
-    solution.CL = comp_loglik;
-    solution.ICL = solution.CL - (lenPsi*log(n*m)/2);
-    solution.XBeta = XBeta(1:m,:);
-    solution.XAlpha = XAlpha(1:m,:);
+    solution.stats.CL = comp_loglik;
+    solution.stats.ICL = solution.stats.CL - (df*log(n*m)/2);
+    solution.stats.XBeta = XBeta(1:m,:);
+    solution.stats.XAlpha = XAlpha(1:m,:);
     
     %%
     if total_EM_tries>1
-        fprintf(1,'ml = %f \n',solution.ml);
+        fprintf(1,'ml = %f \n',solution.stats.ml);
     end
     if loglik > best_loglik
         best_solution = solution;
@@ -269,9 +263,9 @@ while EM_try <= total_EM_tries
 end
 solution = best_solution;
 %
-if total_EM_tries>1;   fprintf(1,'best loglik:  %f\n',solution.ml); end
+if total_EM_tries>1;   fprintf(1,'best loglik:  %f\n',solution.stats.ml); end
 
-solution.cputime = mean(stored_cputime);
-solution.stored_cputime = stored_cputime;
+solution.stats.cputime = mean(stored_cputime);
+solution.stats.stored_cputime = stored_cputime;
 
 
